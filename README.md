@@ -1,50 +1,50 @@
-# PIXEL QUEST 像素冒險
+# 揪呷 JoinBite
 
-一個純前端、零依賴的像素風平台跳躍小遊戲。用 Canvas 以 320×192 的內部解析度繪製，再以 `image-rendering: pixelated` 放大，保留清晰的像素感。
+Mobile-first 聚餐決策 Prototype。使用者可以建立聚餐、分享連結、快速填寫偏好，透過規則產生 3 間候選餐廳，再一起投票完成決定。
 
-## 執行方式
+## 直接執行
 
-直接用瀏覽器開啟 `index.html` 即可，或啟動一個靜態伺服器：
+專案不需要安裝依賴：
 
 ```bash
 python3 -m http.server 8000
-# 然後開啟 http://localhost:8000
 ```
 
-## 操作
+開啟 <http://localhost:8000>。未設定 Supabase 時，資料會保存在瀏覽器 Local Storage。
 
-| 按鍵 | 動作 |
-| --- | --- |
-| ← → / A D | 移動 |
-| Space / ↑ / W | 跳躍（長按跳更高） |
-| Enter | 開始 / 重來 |
-| M | 靜音 |
+## Prototype 流程
 
-觸控裝置會自動顯示螢幕按鍵。
+1. 建立聚餐與分享連結
+2. 填寫發起者偏好
+3. 在等待室模擬其他成員完成
+4. 依共同預算、飲食限制與料理票數產生 3 間推薦
+5. 投票並模擬其他成員投票
+6. 查看結果與 Time to Decision
 
-## 玩法
+## 連接 Supabase
 
-- 收集金幣（+10 分），踩扁史萊姆（+100 分）。
-- 碰到史萊姆側面、尖刺或掉進洞裡會失去一條生命，共 3 條。
-- 抵達終點旗幟即過關，剩餘秒數 × 10 換算成獎勵分數。
-- 最高分會存在瀏覽器 localStorage。
+1. 建立 Supabase Project。
+2. 在 SQL Editor 執行 [`supabase.sql`](./supabase.sql)。
+3. 到 Project Settings → API 取得 Project URL 與 public anon key。
+4. 將資料填入 [`config.js`](./config.js)：
 
-## 檔案結構
+```js
+window.JOINBITE_CONFIG = {
+  supabase: {
+    url: 'https://YOUR_PROJECT.supabase.co',
+    anonKey: 'YOUR_PUBLIC_ANON_KEY',
+  },
+};
+```
 
-- `index.html`：頁面骨架與觸控按鍵。
-- `style.css`：像素風外框、掃描線效果、響應式排版。
-- `game.js`：關卡、精靈圖（以字串陣列定義）、物理、敵人、音效、HUD 與遊戲狀態機。
+重新整理後，右上角會從「本機 Demo」變成「Supabase」。分享連結即可讓其他裝置加入同一個 Room，狀態更新也會透過 Supabase Realtime 同步。
 
-## 修改關卡
+> `supabase.sql` 的匿名讀寫政策只適合 Prototype。正式產品需加入不可猜測的 room token、權限驗證及更嚴格的 RLS。
 
-`game.js` 裡的 `LEVEL_SRC` 是關卡地圖，每個字元代表一格 16px 的方塊：
+## 檔案
 
-| 字元 | 意義 |
-| --- | --- |
-| `#` | 地面 |
-| `=` | 磚塊平台 |
-| `o` | 金幣 |
-| `e` | 史萊姆 |
-| `^` | 尖刺 |
-| `P` | 玩家起點 |
-| `F` | 終點旗幟 |
+- `index.html`：SPA 入口
+- `style.css`：Mobile-first 視覺與響應式樣式
+- `app.js`：流程狀態、Mock Data、推薦與投票邏輯
+- `config.js`：可選的 Supabase 設定
+- `supabase.sql`：Prototype table、RLS 與 Realtime 設定
