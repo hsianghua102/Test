@@ -1,46 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>PIXEL QUEST - 像素冒險</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <main class="wrap">
-    <header class="title">
-      <h1>PIXEL QUEST</h1>
-      <p class="sub">像素冒險 · 收集金幣、踩扁史萊姆、抵達終點旗幟</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f2ec" />
+    <meta name="description" content="Sift 將零散的工作訊息整理成清楚、有優先順序的下一步。" />
+    <title>Sift — 把訊息變成下一步</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">跳至主要內容</a>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Sift 首頁">
+        <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 6.5h20M7.5 13.5h13M11 20.5h6" /></svg>
+        <span>Sift</span>
+      </a>
+      <div class="topbar-meta"><span class="status-dot" aria-hidden="true"></span><span>你的工作簡報</span><span class="date" id="current-date"></span></div>
     </header>
 
-    <div class="screen">
-      <canvas id="game" width="320" height="192"></canvas>
-      <div class="scanlines"></div>
-    </div>
+    <main id="workspace">
+      <section class="intro" id="intro">
+        <div class="eyebrow reveal">AI WORK BRIEF · 01</div>
+        <h1 class="reveal">把散落的訊息，<br /><em>整理成下一步。</em></h1>
+        <p class="intro-copy reveal">貼上今天的 Email、Slack 或會議紀錄。Sift 會替你找出真正重要、需要行動的事。</p>
+      </section>
 
-    <section class="controls">
-      <div class="keys">
-        <span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 移動</span>
-        <span><kbd>Space</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> 跳躍（長按跳更高）</span>
-        <span><kbd>Enter</kbd> 開始 / 重來</span>
-        <span><kbd>M</kbd> 靜音</span>
-      </div>
-      <div class="touch" id="touch">
-        <div class="pad">
-          <button data-key="left" aria-label="左">◀</button>
-          <button data-key="right" aria-label="右">▶</button>
+      <section class="composer reveal" id="composer" aria-labelledby="input-heading">
+        <div class="composer-head">
+          <div><span class="step-no">01</span><h2 id="input-heading">放入未整理的工作訊息</h2></div>
+          <div class="sample-wrap">
+            <button class="text-button" id="sample-button" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 3.5h11v13h-11zM7 7h6M7 10h6M7 13h3" /></svg>載入範例</button>
+            <button class="icon-button sample-menu-trigger" id="sample-menu-trigger" type="button" aria-label="選擇其他範例" aria-expanded="false" aria-controls="sample-menu"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg></button>
+            <div class="sample-menu" id="sample-menu" role="menu" hidden>
+              <button type="button" role="menuitem" data-sample="work"><span>跨部門協作</span><small>4 項待辦</small></button>
+              <button type="button" role="menuitem" data-sample="info"><span>純資訊公告</span><small>無待辦狀態</small></button>
+              <button type="button" role="menuitem" data-sample="error"><span>格式異常內容</span><small>錯誤狀態</small></button>
+            </div>
+          </div>
         </div>
-        <div class="pad">
-          <button data-key="jump" aria-label="跳躍">▲</button>
-          <button data-key="start" aria-label="開始">●</button>
+        <div class="input-shell" id="input-shell">
+          <textarea id="source-input" aria-describedby="input-hint input-status" placeholder="在這裡貼上 Email、Slack 訊息或 Meeting Notes…" maxlength="6000"></textarea>
+          <div class="input-footer"><div class="input-state" id="input-status" aria-live="polite"><span class="input-pulse"></span><span>等待輸入</span></div><span class="char-count"><b id="char-count">0</b> / 6,000</span></div>
         </div>
-      </div>
-    </section>
+        <div class="composer-actions">
+          <p id="input-hint">內容不會離開這個 Prototype</p>
+          <button class="primary-button" id="analyze-button" type="button" disabled><span>開始整理</span><svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 11h12M13 7l4 4-4 4" /></svg></button>
+        </div>
+      </section>
 
-    <footer class="foot">
-      <p>踩到史萊姆頭上可以擊倒它 · 掉進洞裡或碰到尖刺會失去生命 · 剩餘時間會換算成獎勵分數</p>
-    </footer>
-  </main>
-  <script src="game.js"></script>
-</body>
+      <section class="processing" id="processing" aria-live="polite" hidden>
+        <div class="processing-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p class="processing-label">SIFTING YOUR INPUT</p>
+        <h2 id="processing-title">正在理解訊息脈絡</h2>
+        <div class="processing-track"><span id="processing-progress"></span></div>
+        <div class="processing-steps" aria-hidden="true"><span class="active">辨識來源</span><span>擷取行動</span><span>排列優先順序</span></div>
+      </section>
+
+      <section class="results" id="results" hidden aria-labelledby="brief-title">
+        <div class="results-top">
+          <div><div class="eyebrow">YOUR DAILY BRIEF · <span id="brief-date"></span></div><h2 id="brief-title">今天，先處理<span>這些。</span></h2></div>
+          <button class="secondary-button" id="new-analysis" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>整理新內容</button>
+        </div>
+        <article class="daily-brief" id="daily-brief">
+          <div class="brief-orbit" aria-hidden="true"><span></span></div>
+          <div class="brief-copy"><span class="brief-label">今日重點</span><p id="summary-text"></p></div>
+          <div class="brief-stats" id="brief-stats"></div>
+        </article>
+        <div class="task-toolbar">
+          <div class="filter-tabs" role="tablist" aria-label="篩選任務">
+            <button class="active" type="button" role="tab" aria-selected="true" data-filter="active">待處理 <span id="active-count">0</span></button>
+            <button type="button" role="tab" aria-selected="false" data-filter="done">已完成 <span id="done-count">0</span></button>
+            <button type="button" role="tab" aria-selected="false" data-filter="all">全部</button>
+          </div>
+          <span class="sort-label"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4v12M3.5 6.5 6 4l2.5 2.5M14 16V4m-2.5 9.5L14 16l2.5-2.5" /></svg>依優先順序</span>
+        </div>
+        <div class="task-list" id="task-list"></div>
+        <div class="all-done" id="all-done" hidden><div class="done-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m9 16 5 5 9-10" /></svg></div><h3>今天的重要事項都完成了</h3><p>做得好。你可以切換「已完成」再次查看。</p></div>
+      </section>
+
+      <section class="state-panel" id="no-action-state" hidden aria-live="polite">
+        <div class="state-illustration quiet" aria-hidden="true"><span></span><span></span><span></span></div>
+        <span class="state-kicker">NO ACTION NEEDED</span><h2>這些內容暫時不需要你採取行動。</h2><p>我們找到 3 則重要資訊，但沒有明確的待辦或期限。你可以加入更多脈絡，再分析一次。</p>
+        <div class="state-actions"><button class="primary-button edit-input" type="button">返回補充內容</button><button class="secondary-button new-analysis-trigger" type="button">整理其他內容</button></div>
+      </section>
+
+      <section class="state-panel error-panel" id="error-state" hidden role="alert">
+        <div class="state-illustration error" aria-hidden="true">!</div>
+        <span class="state-kicker">ANALYSIS INTERRUPTED</span><h2>這次沒有整理成功。</h2><p>輸入內容的格式似乎不完整。原始內容還在，你可以返回檢查，或直接再試一次。</p>
+        <div class="state-actions"><button class="primary-button" id="retry-button" type="button">重新嘗試</button><button class="secondary-button edit-input" type="button">返回檢查內容</button></div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"><span id="toast-message"></span><button id="toast-action" type="button" hidden>復原</button></div>
+    <script src="app.js"></script>
+  </body>
 </html>
