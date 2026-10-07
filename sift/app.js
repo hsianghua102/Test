@@ -14,6 +14,33 @@
     { id: 4, title: '提供客戶最新企業方案報價', priority: 'low', deadline: '下週一', source: 'Customer', description: '整理最新方案內容與價格，於期限前寄給客戶。', done: false }
   ];
 
+  const CONNECTORS = {
+    slack: {
+      name: 'Slack', count: 8,
+      content: `[Slack MCP｜#product-launch]\nMina · 今天 09:42｜客戶 Demo 改到週四下午，請在週三 17:00 前完成簡報並貼到頻道。\nLeo · 今天 10:18｜新版首頁還缺 PM 確認，請今天 18:00 前回覆設計稿。`,
+      tasks: [
+        { title: '確認新版首頁設計稿', priority: 'high', deadline: '今天 · 18:00', source: 'Slack', description: '#product-launch · 回覆 Leo 首頁 Wireframe 的確認意見。' },
+        { title: '完成客戶 Demo 簡報', priority: 'high', deadline: '週三 · 17:00', source: 'Slack', description: '#product-launch · 完成簡報並貼回頻道供團隊確認。' }
+      ]
+    },
+    notion: {
+      name: 'Notion', count: 4,
+      content: `[Notion MCP｜Project Atlas / 會議紀錄]\nAction Item｜整理企業方案報價，Owner：Mina，Due：下週一。\nDecision｜首頁將採用新版導航；請 PM 明天以前補上驗收條件。`,
+      tasks: [
+        { title: '補上首頁驗收條件', priority: 'medium', deadline: '明天', source: 'Notion', description: 'Project Atlas · 為新版導航補齊可驗證的驗收條件。' },
+        { title: '整理企業方案報價', priority: 'low', deadline: '下週一', source: 'Notion', description: 'Project Atlas · 整理最新方案與價格供客戶確認。' }
+      ]
+    },
+    jira: {
+      name: 'Jira', count: 3,
+      content: `[Jira MCP｜PAY Sprint]\nPAY-248｜付款 API 偶發 timeout，Assignee：Mina，Due：週五，Status：In Progress。請在截止前確認修復與 QA 結果。\nWEB-102｜首頁埋點規格待 PM Review，Due：明天。`,
+      tasks: [
+        { title: '確認 PAY-248 修復與 QA 結果', priority: 'medium', deadline: '週五', source: 'Jira · PAY-248', description: '付款 API 偶發 timeout；確認工程修復狀態與 QA 驗證結果。' },
+        { title: 'Review WEB-102 首頁埋點規格', priority: 'medium', deadline: '明天', source: 'Jira · WEB-102', description: '檢查首頁埋點事件與參數定義是否完整。' }
+      ]
+    }
+  };
+
   const $ = selector => document.querySelector(selector);
   const els = {
     intro: $('#intro'), composer: $('#composer'), input: $('#source-input'), inputShell: $('#input-shell'),
@@ -23,7 +50,8 @@
     noAction: $('#no-action-state'), error: $('#error-state'), summary: $('#summary-text'),
     stats: $('#brief-stats'), taskList: $('#task-list'), activeCount: $('#active-count'), doneCount: $('#done-count'),
     allDone: $('#all-done'), toast: $('#toast'), toastMessage: $('#toast-message'), toastAction: $('#toast-action'),
-    sampleMenu: $('#sample-menu'), sampleTrigger: $('#sample-menu-trigger')
+    sampleMenu: $('#sample-menu'), sampleTrigger: $('#sample-menu-trigger'), syncStrip: $('#sync-strip'),
+    syncSourceCount: $('#sync-source-count'), syncDetail: $('#sync-detail'), syncAll: $('#sync-all')
   };
 
   let tasks = [];
@@ -31,6 +59,7 @@
   let deletedTask = null;
   let toastTimer;
   let isRetry = false;
+  const connectedSources = new Set();
 
   const priorityMap = {
     high: { label: '高優先', rank: 0 }, medium: { label: '中優先', rank: 1 }, low: { label: '低優先', rank: 2 }
@@ -51,8 +80,67 @@
     els.charCount.textContent = count.toLocaleString();
     els.analyze.disabled = count < 8;
     els.inputShell.classList.toggle('has-content', count > 0);
-    els.inputStatus.textContent = count ? `已收到內容 · 約 ${Math.max(1, Math.ceil(count / 120))} 則訊息` : '等待輸入';
+    els.inputStatus.textContent = connectedSources.size
+      ? `已匯入 ${connectedSources.size} 個來源 · ${[...connectedSources].reduce((sum, key) => sum + CONNECTORS[key].count, 0)} 則資料`
+      : count ? `已收到內容 · 約 ${Math.max(1, Math.ceil(count / 120))} 則訊息` : '等待輸入或連接來源';
   }
+
+  async function connectSource(source, quiet = false) {
+    const config = CONNECTORS[source];
+    const card = document.querySelector(`[data-connector-card="${source}"]`);
+    const button = card?.querySelector('[data-connect]');
+    const status = card?.querySelector('[data-connector-status]');
+    if (!config || !card || !button) return;
+
+    card.classList.add('connecting');
+    button.disabled = true;
+    button.querySelector('span').textContent = connectedSources.has(source) ? '同步中' : '連接中';
+    status.textContent = connectedSources.has(source) ? '正在讀取最新更新…' : '正在授權 MCP…';
+    await new Promise(resolve => setTimeout(resolve, quiet ? 420 : 720));
+
+    connectedSources.add(source);
+    if (!els.input.value.includes(`[${config.name} MCP`)) {
+      els.input.value = `${els.input.value.trim()}${els.input.value.trim() ? '\n\n' : ''}${config.content}`;
+    }
+    card.classList.remove('connecting');
+    card.classList.add('connected');
+    button.disabled = false;
+    button.querySelector('span').textContent = '已連接';
+    button.setAttribute('aria-label', `重新同步 ${config.name}`);
+    status.textContent = `已同步 · ${config.count} 則更新`;
+    refreshSyncSummary();
+    updateInputState();
+    if (!quiet) showToast(`${config.name} 已連接，找到 ${config.count} 則近期更新`);
+  }
+
+  function refreshSyncSummary() {
+    const total = [...connectedSources].reduce((sum, key) => sum + CONNECTORS[key].count, 0);
+    els.syncStrip.hidden = connectedSources.size === 0;
+    els.syncSourceCount.textContent = `${connectedSources.size} 個來源已連接`;
+    els.syncDetail.textContent = `已自動辨識 ${total} 則更新中的 Issue 與日期`;
+  }
+
+  function resetConnectors() {
+    connectedSources.clear();
+    document.querySelectorAll('[data-connector-card]').forEach(card => {
+      card.classList.remove('connected', 'connecting');
+      const source = card.dataset.connectorCard;
+      card.querySelector('[data-connect] span').textContent = '連接';
+      card.querySelector('[data-connect]').setAttribute('aria-label', `連接 ${CONNECTORS[source].name}`);
+      card.querySelector('[data-connector-status]').textContent = source === 'slack' ? '訊息與討論串' : source === 'notion' ? '頁面與會議紀錄' : 'Issue 與 Sprint';
+    });
+    refreshSyncSummary();
+  }
+
+  document.querySelectorAll('[data-connect]').forEach(button => button.addEventListener('click', () => connectSource(button.dataset.connect)));
+  els.syncAll.addEventListener('click', async () => {
+    els.syncAll.disabled = true;
+    els.syncAll.classList.add('syncing');
+    for (const source of connectedSources) await connectSource(source, true);
+    els.syncAll.disabled = false;
+    els.syncAll.classList.remove('syncing');
+    showToast('所有來源已更新至最新狀態');
+  });
 
   function toggleSampleMenu(force) {
     const shouldOpen = typeof force === 'boolean' ? force : els.sampleMenu.hidden;
@@ -82,7 +170,7 @@
     hideMainStates();
     els.intro.hidden = false;
     els.composer.hidden = false;
-    if (clear) setInput('');
+    if (clear) { resetConnectors(); setInput(''); }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => els.input.focus(), 250);
   }
@@ -131,6 +219,10 @@
 
   function createTasksFromInput(text) {
     if (text.includes('付款 API') && text.includes('Wireframe')) return DEFAULT_TASKS.map(task => ({ ...task }));
+    const connectorTasks = Object.entries(CONNECTORS)
+      .filter(([, config]) => text.includes(`[${config.name} MCP`))
+      .flatMap(([, config]) => config.tasks.map(task => ({ ...task, id: 0, done: false })));
+    if (connectorTasks.length) return connectorTasks.map((task, index) => ({ ...task, id: Date.now() + index }));
     if (text.includes('UNRESOLVED_BLOCK')) {
       return [{
         id: Date.now(), title: '確認來源資料同步狀態', priority: 'medium', deadline: '尚未指定',
@@ -201,6 +293,7 @@
 
   function bindTaskEvents() {
     els.taskList.querySelectorAll('.task-card').forEach(card => {
+      bindSpotlight(card);
       const id = Number(card.dataset.id);
       card.querySelector('.check-button').addEventListener('click', () => toggleTask(id));
       card.querySelector('.more-button').addEventListener('click', event => {
@@ -288,6 +381,33 @@
       renderTasks();
     });
   });
+
+  function bindSpotlight(element) {
+    if (!element || element.dataset.spotlightBound) return;
+    element.dataset.spotlightBound = 'true';
+    element.addEventListener('pointermove', event => {
+      const rect = element.getBoundingClientRect();
+      element.style.setProperty('--mouse-x', `${event.clientX - rect.left}px`);
+      element.style.setProperty('--mouse-y', `${event.clientY - rect.top}px`);
+    });
+  }
+
+  document.querySelectorAll('.spotlight-surface').forEach(bindSpotlight);
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const progress = Math.min(window.scrollY / 520, 1);
+        els.intro.style.setProperty('--hero-y', `${progress * 70}px`);
+        els.intro.style.setProperty('--hero-scale', String(1 - progress * .035));
+        els.intro.style.setProperty('--hero-opacity', String(1 - progress * .72));
+        ticking = false;
+      });
+    }, { passive: true });
+  }
 
   updateInputState();
 })();
