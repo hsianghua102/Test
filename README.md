@@ -1,6 +1,6 @@
 # Sift — AI 工作資訊整理助手
 
-一個以 PM／專案管理工作者為核心使用者的互動式 Web Prototype。Sift 將貼入的 Email、Slack 與會議紀錄整理成今日摘要與有優先順序的 Action Items。
+一個以 PM／專案管理工作者為核心使用者的互動式 Web Prototype。Sift 模擬透過 MCP 連接 Slack、Notion 與 Jira，將散落在不同工具的訊息、頁面和 Issue 整理成今日摘要與有優先順序的 Action Items。
 
 ## 執行
 
@@ -14,7 +14,8 @@ python3 -m http.server 8000
 
 ## 可測試流程
 
-- 貼上自由文字，或一鍵載入「跨部門協作」範例
+- 連接 Slack、Notion、Jira，模擬同步最近更新並自動辨識日期與 Issue
+- 貼上補充文字，或一鍵載入「跨部門協作」範例
 - 查看三階段 AI 分析動畫與今日重點
 - 完成、編輯、調整優先順序、刪除及復原待辦
 - 在待處理／已完成／全部之間切換

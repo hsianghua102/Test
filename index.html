@@ -3,13 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f2ec" />
+    <meta name="theme-color" content="#050506" />
     <meta name="description" content="Sift 將零散的工作訊息整理成清楚、有優先順序的下一步。" />
     <title>Sift — 把訊息變成下一步</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <a class="skip-link" href="#workspace">跳至主要內容</a>
+    <div class="ambient" aria-hidden="true">
+      <span class="ambient-blob blob-primary"></span>
+      <span class="ambient-blob blob-secondary"></span>
+      <span class="ambient-blob blob-tertiary"></span>
+      <span class="ambient-grid"></span>
+      <span class="ambient-noise"></span>
+    </div>
     <header class="topbar">
       <a class="brand" href="#" aria-label="Sift 首頁">
         <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 6.5h20M7.5 13.5h13M11 20.5h6" /></svg>
@@ -22,12 +29,12 @@
       <section class="intro" id="intro">
         <div class="eyebrow reveal">AI WORK BRIEF · 01</div>
         <h1 class="reveal">把散落的訊息，<br /><em>整理成下一步。</em></h1>
-        <p class="intro-copy reveal">貼上今天的 Email、Slack 或會議紀錄。Sift 會替你找出真正重要、需要行動的事。</p>
+        <p class="intro-copy reveal">連接 Slack、Notion 與 Jira。Sift 會跨來源找出期限、Issue 與真正需要你行動的事。</p>
       </section>
 
-      <section class="composer reveal" id="composer" aria-labelledby="input-heading">
+      <section class="composer reveal spotlight-surface" id="composer" aria-labelledby="input-heading">
         <div class="composer-head">
-          <div><span class="step-no">01</span><h2 id="input-heading">放入未整理的工作訊息</h2></div>
+          <div><span class="step-no">01</span><h2 id="input-heading">連接散落的工作來源</h2></div>
           <div class="sample-wrap">
             <button class="text-button" id="sample-button" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 3.5h11v13h-11zM7 7h6M7 10h6M7 13h3" /></svg>載入範例</button>
             <button class="icon-button sample-menu-trigger" id="sample-menu-trigger" type="button" aria-label="選擇其他範例" aria-expanded="false" aria-controls="sample-menu"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg></button>
@@ -38,12 +45,44 @@
             </div>
           </div>
         </div>
+
+        <section class="source-connectors" aria-labelledby="source-heading">
+          <div class="source-heading">
+            <div>
+              <span class="mcp-label">MCP SOURCES</span>
+              <h3 id="source-heading">從你的工作空間自動抓取</h3>
+            </div>
+            <p>連接後會同步最近的訊息、頁面與 Issue，並辨識其中的日期。</p>
+          </div>
+          <div class="connector-grid">
+            <article class="connector-card" data-connector-card="slack">
+              <div class="connector-icon slack-icon" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+              <div class="connector-copy"><strong>Slack</strong><small data-connector-status>訊息與討論串</small></div>
+              <button class="connect-button" type="button" data-connect="slack" aria-label="連接 Slack"><span>連接</span><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10M10 5l4 4-4 4" /></svg></button>
+            </article>
+            <article class="connector-card" data-connector-card="notion">
+              <div class="connector-icon notion-icon" aria-hidden="true">N</div>
+              <div class="connector-copy"><strong>Notion</strong><small data-connector-status>頁面與會議紀錄</small></div>
+              <button class="connect-button" type="button" data-connect="notion" aria-label="連接 Notion"><span>連接</span><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10M10 5l4 4-4 4" /></svg></button>
+            </article>
+            <article class="connector-card" data-connector-card="jira">
+              <div class="connector-icon jira-icon" aria-hidden="true"><span></span></div>
+              <div class="connector-copy"><strong>Jira</strong><small data-connector-status>Issue 與 Sprint</small></div>
+              <button class="connect-button" type="button" data-connect="jira" aria-label="連接 Jira"><span>連接</span><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10M10 5l4 4-4 4" /></svg></button>
+            </article>
+          </div>
+          <div class="sync-strip" id="sync-strip" hidden>
+            <div><span class="sync-pulse"></span><p><strong id="sync-source-count">0 個來源已連接</strong><small id="sync-detail">等待同步</small></p></div>
+            <button id="sync-all" type="button"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M14 6V3l-1.5 1.5A6 6 0 1 0 15 9M14 3h-3" /></svg>重新同步</button>
+          </div>
+        </section>
+
+        <div class="or-divider"><span>或貼上其他內容</span></div>
         <div class="input-shell" id="input-shell">
-          <textarea id="source-input" aria-describedby="input-hint input-status" placeholder="在這裡貼上 Email、Slack 訊息或 Meeting Notes…" maxlength="6000"></textarea>
+          <textarea id="source-input" aria-describedby="input-status" placeholder="在這裡貼上 Email、Slack 訊息或 Meeting Notes…" maxlength="6000"></textarea>
           <div class="input-footer"><div class="input-state" id="input-status" aria-live="polite"><span class="input-pulse"></span><span>等待輸入</span></div><span class="char-count"><b id="char-count">0</b> / 6,000</span></div>
         </div>
         <div class="composer-actions">
-          <p id="input-hint">內容不會離開這個 Prototype</p>
           <button class="primary-button" id="analyze-button" type="button" disabled><span>開始整理</span><svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 11h12M13 7l4 4-4 4" /></svg></button>
         </div>
       </section>
@@ -61,7 +100,7 @@
           <div><div class="eyebrow">YOUR DAILY BRIEF · <span id="brief-date"></span></div><h2 id="brief-title">今天，先處理<span>這些。</span></h2></div>
           <button class="secondary-button" id="new-analysis" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>整理新內容</button>
         </div>
-        <article class="daily-brief" id="daily-brief">
+        <article class="daily-brief spotlight-surface" id="daily-brief">
           <div class="brief-orbit" aria-hidden="true"><span></span></div>
           <div class="brief-copy"><span class="brief-label">今日重點</span><p id="summary-text"></p></div>
           <div class="brief-stats" id="brief-stats"></div>
