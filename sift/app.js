@@ -75,6 +75,20 @@
     els.input.focus();
   }
 
+  function loadSample(type) {
+    setInput(SAMPLES[type]);
+    const labels = { work: '已載入 4 則', info: '已載入資訊範例', error: '已載入錯誤範例' };
+    $('#sample-label').textContent = labels[type];
+    els.inputShell.classList.remove('just-loaded');
+    requestAnimationFrame(() => els.inputShell.classList.add('just-loaded'));
+    setTimeout(() => {
+      els.inputShell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      els.input.focus({ preventScroll: true });
+    }, 120);
+    setTimeout(() => els.inputShell.classList.remove('just-loaded'), 1100);
+    showToast(type === 'work' ? '範例已載入，可直接開始整理' : '測試範例已載入');
+  }
+
   function updateInputState() {
     const count = els.input.value.length;
     els.charCount.textContent = count.toLocaleString();
@@ -148,12 +162,12 @@
     els.sampleTrigger.setAttribute('aria-expanded', String(shouldOpen));
   }
 
-  $('#sample-button').addEventListener('click', () => setInput(SAMPLES.work));
+  $('#sample-button').addEventListener('click', () => loadSample('work'));
   els.sampleTrigger.addEventListener('click', event => { event.stopPropagation(); toggleSampleMenu(); });
   els.sampleMenu.addEventListener('click', event => {
     const button = event.target.closest('[data-sample]');
     if (!button) return;
-    setInput(SAMPLES[button.dataset.sample]);
+    loadSample(button.dataset.sample);
     toggleSampleMenu(false);
   });
   document.addEventListener('click', event => {
@@ -170,7 +184,7 @@
     hideMainStates();
     els.intro.hidden = false;
     els.composer.hidden = false;
-    if (clear) { resetConnectors(); setInput(''); }
+    if (clear) { resetConnectors(); $('#sample-label').textContent = '載入範例'; setInput(''); }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => els.input.focus(), 250);
   }
